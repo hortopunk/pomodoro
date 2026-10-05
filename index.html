@@ -73,6 +73,261 @@
             font-size: 6rem;
             font-weight: 700;
             font-family: 'Montserrat', sans-serif;
+            width: 220px;
+            padding: 10px 10px 2px 10px;
+            text-align: center;
+            border: none;
+            border-bottom: 2px solid red;
+            outline: none;
+            background: transparent;
+            color: red;
+        }
+        #setup button {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            padding: 15px 20px;
+            background: transparent;
+            color: red;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        #setup button:active {
+            opacity: 0.6;
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="red-bar"></div>
+    <div id="timer-text" class="hidden">20:00</div>
+    <div id="close-btn" class="hidden">&times;</div>
+    <div id="setup">
+        <input type="text" id="duration" value="20:00" placeholder="mm:ss" inputmode="numeric">
+        <br>
+        <button id="start-btn">Démarrer</button>
+    </div>
+
+    <script>
+        const redBar = document.getElementById('red-bar');
+        const timerText = document.getElementById('timer-text');
+        const closeBtn = document.getElementById('close-btn');
+        const setup = document.getElementById('setup');
+        const durationInput = document.getElementById('duration');
+        const startBtn = document.getElementById('start-btn');
+
+        let totalDuration = 0;
+        let startTime = 0;
+        let animId = null;
+        let wakeLockSentinel = null;
+        let timerRunning = false;
+        let orientationLock = null;
+
+        async function enterFullscreen() {
+            try {
+                if (document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    await document.documentElement.webkitRequestFullscreen();
+                }
+            } catch (err) {
+                console.warn('Fullscreen non disponible:', err);
+            }
+        }
+
+        async function lockLandscape() {
+            try {
+                if (screen.orientation && screen.orientation.lock) {
+                    orientationLock = await screen.orientation.lock('landscape');
+                }
+            } catch (err) {
+                console.warn('Lock orientation non disponible:', err);
+            }
+        }
+
+        async function exitFullscreen() {
+            try {
+                if (document.fullscreenElement) {
+                    await document.exitFullscreen();
+                } else if (document.webkitFullscreenElement) {
+                    await document.webkitExitFullscreen();
+                }
+            } catch (err) {
+                console.warn('Exit fullscreen:', err);
+            }
+        }
+
+        async function unlockOrientation() {
+            try {
+                if (screen.orientation && screen.orientation.unlock) {
+                    await screen.orientation.unlock();
+                }
+            } catch (err) {
+                console.warn('Unlock orientation:', err);
+            }
+        }
+
+        async function requestWakeLock() {
+            try {
+                wakeLockSentinel = await navigator.wakeLock.request('screen');
+            } catch (err) {
+                console.warn('Wake Lock non disponible:', err);
+            }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLockSentinel) {
+                wakeLockSentinel.release();
+                wakeLockSentinel = null;
+            }
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && timerRunning) {
+                requestWakeLock();
+            }
+        });
+
+        function applySweepTo(el, progress) {
+            const rect = el.getBoundingClientRect();
+            const redEdge = progress * window.innerWidth;
+            const x = ((redEdge - rect.left) / rect.width) * 100;
+            const clampedX = Math.max(0, Math.min(100, x));
+            el.style.backgroundImage =
+                'linear-gradient(to right, #fff 0%, #fff ' + clampedX + '%, #f00 ' + clampedX + '%, #f00 100%)';
+        }
+
+        function parseDuration(value) {
+            const raw = value.trim();
+            if (raw.includes(':')) {
+                const parts = raw.split(':');
+                const min = parseInt(parts[0]) || 0;
+                const sec = parseInt(parts[1]) || 0;
+                return min * 60 + sec;
+            }
+            return parseInt(raw) * 60 || 0;
+        }
+
+        closeBtn.addEventListener('click', () => {
+            location.reload();
+        });
+
+        startBtn.addEventListener('click', async () => {
+            const totalSeconds = parseDuration(durationInput.value) || 20 * 60;
+            totalDuration = totalSeconds * 1000;
+            startTime = Date.now();
+            timerRunning = true;
+
+            await enterFullscreen();
+            await lockLandscape();
+
+            setup.classList.add('hidden');
+            timerText.classList.remove('hidden');
+            closeBtn.classList.remove('hidden');
+            requestWakeLock();
+            update();
+        });
+
+        function update() {
+            const elapsed = Date.now() - startTime;
+            const remaining = Math.max(0, totalDuration - elapsed);
+            const progress = Math.min(1, elapsed / totalDuration);
+
+            redBar.style.width = (progress * 100) + '%';
+
+            const secs = Math.ceil(remaining / 1000);
+            const min = Math.floor(secs / 60);
+            const sec = secs % 60;
+            timerText.textContent = min + ':' + (sec < 10 ? '0' : '') + sec;
+
+            applySweepTo(timerText, progress);
+            applySweepTo(closeBtn, progress);
+
+            if (remaining > 0) {
+                animId = requestAnimationFrame(update);
+            } else {
+                timerRunning = false;
+                releaseWakeLock();
+                if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
+                timerText.textContent = "Terminé !";
+                timerText.style.backgroundImage = 'linear-gradient(to right, #fff 0%, #fff 100%)';
+                clos<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Pomodoro</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: white;
+            font-family: 'Montserrat', sans-serif;
+            position: relative;
+        }
+        #red-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: red;
+            z-index: 1;
+        }
+        #timer-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            font-weight: 700;
+            z-index: 2;
+            background-image: linear-gradient(to right, #f00 0%, #f00 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+        #close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            z-index: 10;
+            cursor: pointer;
+            background-image: linear-gradient(to right, #f00 0%, #f00 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #setup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            text-align: center;
+            font-family: 'Montserrat', sans-serif;
+        }
+        #setup input {
+            font-size: 6rem;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
             width: 180px;
             padding: 10px 10px 2px 10px;
             text-align: center;
