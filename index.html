@@ -27,6 +27,20 @@
             position: relative;
             perspective: 1000px;
         }
+        html:fullscreen,
+        html:-webkit-full-screen {
+            width: 100vw;
+            height: 100vh;
+            background: white;
+        }
+        html:fullscreen body,
+        html:-webkit-full-screen body {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
         #red-bar {
             position: absolute;
             top: 0;

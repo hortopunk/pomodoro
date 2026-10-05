@@ -1,7 +1,8 @@
 {
     "name": "Pomodoro",
     "short_name": "Pomodoro",
-    "start_url": "./",
+    "start_url": "./index.html",
+    "scope": "./",
     "display": "standalone",
     "orientation": "portrait",
     "background_color": "#ffffff",
