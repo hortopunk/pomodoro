@@ -17,6 +17,10 @@
         html {
             width: 100%;
             height: 100%;
+            background: white;
+        }
+        ::backdrop {
+            background: white;
         }
         body {
             width: 100%;
@@ -27,6 +31,8 @@
             font-family: 'Montserrat', sans-serif;
             position: relative;
         }
+        html:fullscreen,
+        html:-webkit-full-screen,
         body:fullscreen,
         body:-webkit-full-screen {
             width: 100vw;
@@ -162,7 +168,7 @@
     <div id="timer-text" class="hidden">20:00</div>
     <div id="close-btn" class="hidden">&times;</div>
     <div id="setup">
-        <input type="text" id="duration" value="20:00" placeholder="mm:ss" inputmode="numeric">
+        <input type="text" id="duration" value="20:00" placeholder="mm:ss" inputmode="numeric" name="pomodoro-duration" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
         <span id="measure-span">20:00</span>
         <br>
         <button id="start-btn">Démarrer</button>
@@ -220,7 +226,7 @@
         }
 
         async function enterFullscreen() {
-            const el = document.body;
+            const el = document.documentElement;
             try {
                 if (el.requestFullscreen) {
                     await el.requestFullscreen();
