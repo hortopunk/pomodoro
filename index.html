@@ -80,6 +80,7 @@
             outline: none;
             background: transparent;
             color: red;
+            transition: transform 0.5s ease, border-bottom-color 0.5s ease;
         }
         #setup button {
             font-size: 1.5rem;
@@ -92,9 +93,26 @@
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 2px;
+            transition: opacity 0.5s ease;
         }
         #setup button:active {
             opacity: 0.6;
+        }
+        #setup.setup-transitioning input {
+            transform: scale(1.2);
+            border-bottom-color: transparent;
+        }
+        #setup.setup-transitioning button {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #measure-span {
+            position: absolute;
+            visibility: hidden;
+            white-space: pre;
+            font-size: 6rem;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
         }
         .hidden { display: none !important; }
     </style>
@@ -105,6 +123,7 @@
     <div id="close-btn" class="hidden">&times;</div>
     <div id="setup">
         <input type="text" id="duration" value="20:00" placeholder="mm:ss" inputmode="numeric">
+        <span id="measure-span">20:00</span>
         <br>
         <button id="start-btn">Démarrer</button>
     </div>
@@ -116,6 +135,7 @@
         const setup = document.getElementById('setup');
         const durationInput = document.getElementById('duration');
         const startBtn = document.getElementById('start-btn');
+        const measureSpan = document.getElementById('measure-span');
 
         let totalDuration = 0;
         let startTime = 0;
@@ -125,8 +145,11 @@
         let orientationLock = null;
 
         function autoResizeInput() {
-            durationInput.style.width = 'auto';
-            durationInput.style.width = durationInput.scrollWidth + 'px';
+            const text = durationInput.value || durationInput.placeholder || '';
+            measureSpan.textContent = text;
+            const textWidth = measureSpan.offsetWidth;
+            const padding = 20;
+            durationInput.style.width = (textWidth + padding) + 'px';
         }
 
         durationInput.addEventListener('input', autoResizeInput);
@@ -223,6 +246,10 @@
         });
 
         startBtn.addEventListener('click', async () => {
+            setup.classList.add('setup-transitioning');
+
+            await new Promise(r => setTimeout(r, 500));
+
             const totalSeconds = parseDuration(durationInput.value) || 20 * 60;
             totalDuration = totalSeconds * 1000;
             startTime = Date.now();
