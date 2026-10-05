@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Pomodoro</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="icon" type="image/png" sizes="192x192" href="pomodoro_192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="pomodoro.png">
+    <link rel="apple-touch-icon" href="pomodoro_192.png">
     <meta name="theme-color" content="#ffffff">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -90,6 +92,11 @@
             text-align: center;
             font-family: 'Montserrat', sans-serif;
             transition: top 0.3s ease;
+            opacity: 0;
+        }
+        #setup.setup-ready {
+            opacity: 1;
+            transition: top 0.3s ease, opacity 0.4s ease;
         }
         #setup input {
             font-size: 6rem;
@@ -151,10 +158,6 @@
     </div>
 
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js');
-        }
-
         const redBar = document.getElementById('red-bar');
         const timerText = document.getElementById('timer-text');
         const closeBtn = document.getElementById('close-btn');
@@ -178,6 +181,7 @@
             } catch (err) {
                 console.warn('Lock portrait non disponible:', err);
             }
+            setup.classList.add('setup-ready');
         }
 
         async function lockLandscape() {
@@ -309,7 +313,7 @@
             const x = ((redEdge - rect.left) / rect.width) * 100;
             const clampedX = Math.max(0, Math.min(100, x));
             el.style.backgroundImage =
-                'linear-gradient(to right, #fff 0%, #fff ' + clampedX + '%, #f00 ' + clampedX + '%, #f00 100%)';
+                'linear-gradient(to right, #f00 0%, #f00 ' + clampedX + '%, #fff ' + clampedX + '%, #fff 100%)';
         }
 
         function parseDuration(value) {

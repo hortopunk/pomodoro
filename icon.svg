@@ -1,4 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-    <rect width="512" height="512" fill="white"/>
-    <text x="256" y="256" font-size="320" text-anchor="middle" dominant-baseline="central">🍅</text>
+    <rect width="512" height="512" rx="96" fill="white"/>
+    <circle cx="256" cy="280" r="160" fill="#e53935"/>
+    <ellipse cx="256" cy="280" rx="160" ry="150" fill="#ef5350"/>
+    <ellipse cx="220" cy="240" rx="60" ry="40" fill="#ff8a80" opacity="0.4"/>
+    <path d="M256 120 Q240 100 220 110 Q230 90 256 95 Q282 90 292 110 Q272 100 256 120Z" fill="#43a047"/>
+    <path d="M256 120 Q250 80 256 60 Q262 80 256 120Z" fill="#2e7d32"/>
+    <path d="M256 120 Q230 105 210 115 Q225 95 256 100Z" fill="#388e3c"/>
+    <path d="M256 120 Q282 105 302 115 Q287 95 256 100Z" fill="#388e3c"/>
 </svg>
