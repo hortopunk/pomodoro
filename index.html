@@ -152,7 +152,7 @@
 
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js');
+            navigator.serviceWorker.register('service-worker.js');
         }
 
         const redBar = document.getElementById('red-bar');
@@ -169,6 +169,85 @@
         let wakeLockSentinel = null;
         let timerRunning = false;
         let orientationLock = null;
+
+        async function lockPortrait() {
+            try {
+                if (screen.orientation && screen.orientation.lock) {
+                    orientationLock = await screen.orientation.lock('portrait');
+                }
+            } catch (err) {
+                console.warn('Lock portrait non disponible:', err);
+            }
+        }
+
+        async function lockLandscape() {
+            try {
+                if (screen.orientation && screen.orientation.lock) {
+                    if (orientationLock) {
+                        await screen.orientation.unlock();
+                    }
+                    orientationLock = await screen.orientation.lock('landscape');
+                }
+            } catch (err) {
+                console.warn('Lock landscape non disponible:', err);
+            }
+        }
+
+        async function unlockOrientation() {
+            try {
+                if (screen.orientation && screen.orientation.unlock) {
+                    await screen.orientation.unlock();
+                }
+                orientationLock = null;
+            } catch (err) {
+                console.warn('Unlock orientation:', err);
+            }
+        }
+
+        async function enterFullscreen() {
+            try {
+                if (document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    await document.documentElement.webkitRequestFullscreen();
+                }
+            } catch (err) {
+                console.warn('Fullscreen non disponible:', err);
+            }
+        }
+
+        async function exitFullscreen() {
+            try {
+                if (document.fullscreenElement) {
+                    await document.exitFullscreen();
+                } else if (document.webkitFullscreenElement) {
+                    await document.webkitExitFullscreen();
+                }
+            } catch (err) {
+                console.warn('Exit fullscreen:', err);
+            }
+        }
+
+        async function requestWakeLock() {
+            try {
+                wakeLockSentinel = await navigator.wakeLock.request('screen');
+            } catch (err) {
+                console.warn('Wake Lock non disponible:', err);
+            }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLockSentinel) {
+                wakeLockSentinel.release();
+                wakeLockSentinel = null;
+            }
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && timerRunning) {
+                requestWakeLock();
+            }
+        });
 
         function autoResizeInput() {
             const text = durationInput.value || durationInput.placeholder || '';
@@ -223,71 +302,6 @@
                 });
             });
         }
-
-        async function enterFullscreen() {
-            try {
-                if (document.documentElement.requestFullscreen) {
-                    await document.documentElement.requestFullscreen();
-                } else if (document.documentElement.webkitRequestFullscreen) {
-                    await document.documentElement.webkitRequestFullscreen();
-                }
-            } catch (err) {
-                console.warn('Fullscreen non disponible:', err);
-            }
-        }
-
-        async function lockLandscape() {
-            try {
-                if (screen.orientation && screen.orientation.lock) {
-                    orientationLock = await screen.orientation.lock('landscape');
-                }
-            } catch (err) {
-                console.warn('Lock orientation non disponible:', err);
-            }
-        }
-
-        async function exitFullscreen() {
-            try {
-                if (document.fullscreenElement) {
-                    await document.exitFullscreen();
-                } else if (document.webkitFullscreenElement) {
-                    await document.webkitExitFullscreen();
-                }
-            } catch (err) {
-                console.warn('Exit fullscreen:', err);
-            }
-        }
-
-        async function unlockOrientation() {
-            try {
-                if (screen.orientation && screen.orientation.unlock) {
-                    await screen.orientation.unlock();
-                }
-            } catch (err) {
-                console.warn('Unlock orientation:', err);
-            }
-        }
-
-        async function requestWakeLock() {
-            try {
-                wakeLockSentinel = await navigator.wakeLock.request('screen');
-            } catch (err) {
-                console.warn('Wake Lock non disponible:', err);
-            }
-        }
-
-        function releaseWakeLock() {
-            if (wakeLockSentinel) {
-                wakeLockSentinel.release();
-                wakeLockSentinel = null;
-            }
-        }
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible' && timerRunning) {
-                requestWakeLock();
-            }
-        });
 
         function applySweepTo(el, progress) {
             const rect = el.getBoundingClientRect();
@@ -366,8 +380,11 @@
                 closeBtn.style.backgroundImage = 'linear-gradient(to right, #fff 0%, #fff 100%)';
                 exitFullscreen();
                 unlockOrientation();
+                lockPortrait();
             }
         }
+
+        lockPortrait();
     </script>
 </body>
 </html>
