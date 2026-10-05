@@ -2,9 +2,9 @@
     "name": "Pomodoro",
     "short_name": "Pomodoro",
     "id": "/",
-    "start_url": "index.html",
+    "start_url": "/",
     "display": "standalone",
-    "orientation": "landscape",
+    "orientation": "portrait",
     "background_color": "#ffffff",
     "theme_color": "#ffffff",
     "icons": [
