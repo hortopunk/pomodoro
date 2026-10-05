@@ -43,6 +43,23 @@
             -webkit-text-fill-color: transparent;
             color: transparent;
         }
+        #close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            z-index: 10;
+            cursor: pointer;
+            background-image: linear-gradient(to right, #f00 0%, #f00 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
         #setup {
             position: absolute;
             top: 50%;
@@ -86,21 +103,13 @@
         #setup button:active {
             opacity: 0.6;
         }
-        #wake-lock-indicator {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 0.8rem;
-            color: #999;
-            z-index: 5;
-        }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
     <div id="red-bar"></div>
     <div id="timer-text" class="hidden">20:00</div>
-    <div id="wake-lock-indicator" class="hidden">🔒 écran actif</div>
+    <div id="close-btn" class="hidden">&times;</div>
     <div id="setup">
         <input type="number" id="duration" value="20" min="1" max="120">
         <br>
@@ -110,10 +119,10 @@
     <script>
         const redBar = document.getElementById('red-bar');
         const timerText = document.getElementById('timer-text');
+        const closeBtn = document.getElementById('close-btn');
         const setup = document.getElementById('setup');
         const durationInput = document.getElementById('duration');
         const startBtn = document.getElementById('start-btn');
-        const wakeLockIndicator = document.getElementById('wake-lock-indicator');
 
         let totalDuration = 0;
         let startTime = 0;
@@ -169,10 +178,6 @@
         async function requestWakeLock() {
             try {
                 wakeLockSentinel = await navigator.wakeLock.request('screen');
-                wakeLockSentinel.addEventListener('release', () => {
-                    wakeLockIndicator.classList.add('hidden');
-                });
-                wakeLockIndicator.classList.remove('hidden');
             } catch (err) {
                 console.warn('Wake Lock non disponible:', err);
             }
@@ -183,7 +188,6 @@
                 wakeLockSentinel.release();
                 wakeLockSentinel = null;
             }
-            wakeLockIndicator.classList.add('hidden');
         }
 
         document.addEventListener('visibilitychange', () => {
@@ -192,14 +196,18 @@
             }
         });
 
-        function applySweep(progress) {
-            const textRect = timerText.getBoundingClientRect();
+        function applySweepTo(el, progress) {
+            const rect = el.getBoundingClientRect();
             const redEdge = progress * window.innerWidth;
-            const x = ((redEdge - textRect.left) / textRect.width) * 100;
+            const x = ((redEdge - rect.left) / rect.width) * 100;
             const clampedX = Math.max(0, Math.min(100, x));
-            timerText.style.backgroundImage =
+            el.style.backgroundImage =
                 'linear-gradient(to right, #fff 0%, #fff ' + clampedX + '%, #f00 ' + clampedX + '%, #f00 100%)';
         }
+
+        closeBtn.addEventListener('click', () => {
+            location.reload();
+        });
 
         startBtn.addEventListener('click', async () => {
             const minutes = parseInt(durationInput.value) || 20;
@@ -212,6 +220,7 @@
 
             setup.classList.add('hidden');
             timerText.classList.remove('hidden');
+            closeBtn.classList.remove('hidden');
             requestWakeLock();
             update();
         });
@@ -228,7 +237,8 @@
             const sec = secs % 60;
             timerText.textContent = min + ':' + (sec < 10 ? '0' : '') + sec;
 
-            applySweep(progress);
+            applySweepTo(timerText, progress);
+            applySweepTo(closeBtn, progress);
 
             if (remaining > 0) {
                 animId = requestAnimationFrame(update);
@@ -238,6 +248,7 @@
                 if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
                 timerText.textContent = "Terminé !";
                 timerText.style.backgroundImage = 'linear-gradient(to right, #fff 0%, #fff 100%)';
+                closeBtn.style.backgroundImage = 'linear-gradient(to right, #fff 0%, #fff 100%)';
                 exitFullscreen();
                 unlockOrientation();
             }
